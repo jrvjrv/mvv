@@ -1,3 +1,7 @@
+package com.jrvdev.vasl.board;
+
+import com.jrvdev.IOUtils.IOUtilsx;
+
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.IOException;

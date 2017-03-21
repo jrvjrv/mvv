@@ -1,3 +1,5 @@
+package com.jrvdev.vasl.board;
+
 public class BoardVersion implements Comparable<BoardVersion> {
 
     private final String _version;

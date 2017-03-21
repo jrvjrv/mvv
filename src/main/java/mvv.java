@@ -1,3 +1,20 @@
+import com.jrvdev.vasl.board.BoardArchive;
+import com.jrvdev.vasl.board.BoardVersion;
+import com.jrvdev.vasl.board.BoardVersionComparer;
+import com.jrvdev.vasl.board.ExactMatch;
+import com.jrvdev.vasl.board.ExtensionMatch;
+import com.jrvdev.vasl.board.RepositoryRetriever;
+import com.jrvdev.vasl.board.VersionedBoard;
+
+import com.jrvdev.vasl.board.IWhiteListMatch;
+import com.jrvdev.vasl.version.IMasterVersion;
+import com.jrvdev.vasl.version.IVersionComparer;
+import com.jrvdev.vasl.version.MasterVersion;
+import com.jrvdev.vasl.version.MasterVersionLoader;
+import com.jrvdev.vasl.version.WebMasterVersionRetriever;
+import com.jrvdev.vasl.version.IMasterVersionLoader;
+
+
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
@@ -5,6 +22,7 @@ import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.nio.file.Files;
 
+// http://www.oracle.com/technetwork/articles/java/json-1973242.html
 // gets root. use url to go to boards directory. need to parse json
 // https://api.github.com/repos/vasl-developers/vasl-boards-extensions/contents/
 
@@ -18,16 +36,16 @@ public class mvv {
         IMasterVersionLoader mvl = new MasterVersionLoader(
             new WebMasterVersionRetriever( boardVersionURL ) );
 
-        IMasterVersion versions = new MasterVersion( mvl );
+        IMasterVersion masterVersions = new MasterVersion( mvl );
 
-        versions.load();
+        masterVersions.load();
 
-        System.out.println(versions.toString());
+        System.out.println(masterVersions.toString());
 
         VersionedBoard versionedBoard = new VersionedBoard("22", new BoardVersion( "6.1" ) );
         VersionedBoard currentBoard = new VersionedBoard("22", new BoardVersion( "6.2" ) );
 
-        IVersionComparer<BoardVersion> comparer = new BoardVersionComparer( versions );
+        IVersionComparer<BoardVersion> comparer = new BoardVersionComparer( masterVersions );
 
         System.out.println( "Current is updatable: " + comparer.IsUpdatable( currentBoard ) );
         System.out.println( "Old is updatable: " + comparer.IsUpdatable( versionedBoard ) );
@@ -66,8 +84,14 @@ public class mvv {
 
         System.out.println( boardArchive.getName() + ": master vs archive " + comparer.VersionComparison( boardArchive ));
 
+        //CheckAllBoardsAgainstMaster( masterVersions, comparer, baseBoardUrl, legalFiles );
 
-        versions.forEach( ( masterBoardName, masterBoardVersion ) -> {
+
+
+    }
+
+    private static void CheckAllBoardsAgainstMaster( IMasterVersion masterVersions, IVersionComparer<BoardVersion> comparer, String baseBoardUrl, Set<IWhiteListMatch> legalFiles ) {
+        masterVersions.forEach( ( String masterBoardName, BoardVersion masterBoardVersion ) -> {
             System.out.println( "loop: " + masterBoardName );
             String masterTargetBoardFileName = System.getProperty("user.dir") + System.getProperty("file.separator", "\\") + "bd" + masterBoardName;
             String masterSourceBoardUrl = baseBoardUrl + "/bd" + masterBoardName;

@@ -1,3 +1,5 @@
+package com.jrvdev.vasl.board;
+
 import org.apache.commons.lang3.StringUtils;
 
 

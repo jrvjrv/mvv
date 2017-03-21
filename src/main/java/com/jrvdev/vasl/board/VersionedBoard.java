@@ -1,3 +1,6 @@
+package com.jrvdev.vasl.board;
+import com.jrvdev.vasl.version.IVersionedResource;
+
 public class VersionedBoard implements IVersionedResource< BoardVersion > {
     private final String _name;
     private final BoardVersion _version;

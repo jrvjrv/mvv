@@ -1,3 +1,8 @@
+package com.jrvdev.vasl.board;
+
+import com.jrvdev.IOUtils.IOUtilsx;
+import com.jrvdev.vasl.version.IVersionedResource;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;

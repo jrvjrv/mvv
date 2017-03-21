@@ -1,3 +1,4 @@
+package com.jrvdev.vasl.board;
 
 public class ExactMatch implements IWhiteListMatch {
 

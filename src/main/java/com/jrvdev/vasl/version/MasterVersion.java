@@ -1,3 +1,7 @@
+package com.jrvdev.vasl.version;
+
+import com.jrvdev.vasl.board.BoardVersion;
+
 import java.util.Hashtable;
 import java.util.HashMap;
 import java.util.Map;

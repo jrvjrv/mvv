@@ -1,3 +1,5 @@
+package com.jrvdev.vasl.version;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.IOException;
