@@ -7,9 +7,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 
 import org.junit.Test;
+import org.junit.Ignore;
 
 public class GitFolderRetrieverTest {
     @Test
+    @Ignore // access the internet
     public void retrieves_value() throws MalformedURLException {
         URL target = new URL( "https://api.github.com/repos/vasl-developers/vasl-boards-extensions/contents/");
         GitFolderRetriever r = new GitFolderRetriever(target);

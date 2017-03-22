@@ -9,7 +9,7 @@ import static org.junit.Assert.assertFalse;
 public class GitFolderItemTest {
     @Test
     public void dir_loads_from_json() {
-        String testJson = "{ 'name':'abc', 'type': 'dir', 'git_url': 'ghi'}";
+        String testJson = "{ 'name':'abc', 'type': 'dir', 'url': 'ghi'}";
 
         Gson gson = new Gson();
 
@@ -17,13 +17,13 @@ public class GitFolderItemTest {
 
         assertEquals( "abc", item.getName() );
         assertTrue( item.isDir() );
-        assertEquals( "ghi", item.getGitUrl() );
+        assertEquals( "ghi", item.getUrl() );
 
     }
 
     @Test
     public void non_dir_loads_from_json() {
-        String testJson = "{ 'name':'jkl', 'type': 'mno', 'git_url': 'pqr'}";
+        String testJson = "{ 'name':'jkl', 'type': 'mno', 'url': 'pqr'}";
 
         Gson gson = new Gson();
 
@@ -31,7 +31,7 @@ public class GitFolderItemTest {
 
         assertEquals( "jkl", item.getName() );
         assertFalse( item.isDir() );
-        assertEquals( "pqr", item.getGitUrl() );
+        assertEquals( "pqr", item.getUrl() );
         
     }
 }

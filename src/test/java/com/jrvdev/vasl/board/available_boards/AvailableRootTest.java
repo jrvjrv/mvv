@@ -33,7 +33,7 @@ public class AvailableRootTest {
 
     // https://api.github.com/repos/vasl-developers/vasl-boards-extensions/contents/
     @Test
-    @Ignore
+    @Ignore // accesses the internet
     public void boards_url_not_null_or_empty() throws MalformedURLException {
         AvailableRoot r = new AvailableRoot("https://api.github.com/repos/vasl-developers/vasl-boards-extensions/contents/");
 

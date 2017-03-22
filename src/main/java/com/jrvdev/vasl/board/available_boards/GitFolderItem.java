@@ -3,7 +3,7 @@ package com.jrvdev.vasl.board.available_boards;
 class GitFolderItem {
     private String name;
     private String type;
-    private String git_url;
+    private String url;
 
     public String getName() {
         return name;
@@ -13,7 +13,11 @@ class GitFolderItem {
         return type.equals( "dir" );
     }
 
-    public String getGitUrl() {
-        return git_url;
+    public boolean isFile() {
+        return type.equals( "file" );
+    }
+
+    public String getUrl() {
+        return url;
     }
 }
