@@ -1,0 +1,12 @@
+# to list files being tracked
+#   git ls-tree -r master --name-only | less
+# to stop tracking a bunch of files
+#   git rm -r --cached *.class
+
+
+**/*.class
+bd*
+javac-services.0.log
+lib/**
+node_modules/**
+target/**
