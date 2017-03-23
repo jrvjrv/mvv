@@ -62,7 +62,7 @@ public class mvv {
         String sourceBoardUrl = baseBoardUrl + "/bd" + boardName;
         RepositoryRetriever repositoryRetriever = new RepositoryRetriever( sourceBoardUrl, targetBoardFileName );
 
-        //repositoryRetriever.getRepositoryFile();
+        repositoryRetriever.getRepositoryFile();
 
         HashSet<IWhiteListMatch> legalFiles = new HashSet<IWhiteListMatch>();
         legalFiles.add( new ExactMatch( "data" ) );
