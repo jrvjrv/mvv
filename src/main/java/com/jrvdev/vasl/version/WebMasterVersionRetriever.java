@@ -1,5 +1,7 @@
 package com.jrvdev.vasl.version;
 
+import com.jrvdev.netUtils.netUtils;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.IOException;
@@ -23,7 +25,7 @@ public class WebMasterVersionRetriever implements IMasterVersionRetriever {
         System.setProperty("jsse.enableSNIExtension", "false");
 
        try {
-            URL base = new URL(_sourceUri);
+            URL base = new URL( netUtils.encodeUrl( _sourceUri ) );
             URLConnection conn = base.openConnection();
             conn.setUseCaches(false);
 

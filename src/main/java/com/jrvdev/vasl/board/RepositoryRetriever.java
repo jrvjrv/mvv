@@ -1,12 +1,16 @@
 package com.jrvdev.vasl.board;
 
-import com.jrvdev.IOUtils.IOUtilsx;
+import com.jrvdev.netUtils.netUtils;
+
+
+import org.apache.commons.io.IOUtils;
 
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.IOException;
 
 import java.net.URL;
+import java.net.URI;
 import java.net.URLConnection;
 import java.net.HttpURLConnection;
 
@@ -33,7 +37,7 @@ public class RepositoryRetriever {
         InputStream in = null;
         HttpURLConnection conn = null;
         try {
-            URL website = new URL(_url.replace(" ", "%20"));
+            URL website = new URL( netUtils.encodeUrl( _url ) );
             conn = (HttpURLConnection) website.openConnection();
             conn.setUseCaches(false);
 
@@ -55,8 +59,8 @@ public class RepositoryRetriever {
             return false;
         }
         finally {
-            IOUtilsx.closeQuietly(outFile);
-            IOUtilsx.closeQuietly(in);
+            IOUtils.closeQuietly(outFile);
+            IOUtils.closeQuietly(in);
         }
     }
 }

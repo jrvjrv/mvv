@@ -26,6 +26,7 @@ import java.net.MalformedURLException;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.nio.file.Files;
+import java.util.ArrayList;
 
 // http://www.oracle.com/technetwork/articles/java/json-1973242.html
 // gets root. use url to go to boards directory. need to parse json
@@ -62,13 +63,16 @@ public class mvv {
               System.getProperty("user.dir"));
 
         String baseBoardUrl = "https://raw.githubusercontent.com/vasl-developers/vasl-boards-extensions/master/boards";
-        String boardName = "SC";
+        String boardName = "BOB DZN";
         String targetBoardFileName = System.getProperty("user.dir") + System.getProperty("file.separator", "\\") + "bd" + boardName;
         String sourceBoardUrl = baseBoardUrl + "/bd" + boardName;
         RepositoryRetriever repositoryRetriever = new RepositoryRetriever( sourceBoardUrl, targetBoardFileName );
 
         if ( ! fileExists( targetBoardFileName ) ) {
-            repositoryRetriever.getRepositoryFile();
+            System.out.println( "Retrieving " + sourceBoardUrl );
+            if ( !repositoryRetriever.getRepositoryFile() ) {
+                System.out.println( "Retrieve failed!");
+            }
         }
 
         HashSet<IWhiteListMatch> legalFiles = new HashSet<IWhiteListMatch>();
@@ -91,7 +95,7 @@ public class mvv {
 
         System.out.println( boardArchive.getName() + ": master vs archive " + comparer.VersionComparison( boardArchive ));
 
-        //CheckAllBoardsAgainstMaster( masterVersions, comparer, baseBoardUrl, legalFiles );
+        CheckAllBoardsAgainstMaster( masterVersions, comparer, baseBoardUrl, legalFiles );
 
         CheckMasterForAllBoards( masterVersions );
 
@@ -113,7 +117,8 @@ public class mvv {
             GitFolderRetriever boardsRetriever = new GitFolderRetriever( boardsUrl );
             GitFolderParser boardsParser = new GitFolderParser( boardsRetriever );
 
-            System.out.println( "generated master" );
+            ArrayList<String> masterVersionsTxt = new ArrayList<String>();
+
             boardsParser.getFiles().forEach( ( String file ) -> {
                 if( file.startsWith( "bd") ) {
                     String boardName = file.substring( 2 );
@@ -124,7 +129,11 @@ public class mvv {
                     //if (  fileExists( masterTargetBoardFileName ) ) {
                         try {
                             BoardArchive actualBoardArchive = new BoardArchive(System.getProperty("user.dir"), boardName, legalFiles );
-                            System.out.println( boardName + " = " + actualBoardArchive.getVersion().toString() );
+                            System.out.println( "Checking for bad names: " + boardName );
+                            actualBoardArchive.getBadNames().forEach( ( name ) -> {
+                                System.out.println( "  bad name: " + name );
+                            });
+                            masterVersionsTxt.add( boardName + " = " + actualBoardArchive.getVersion().toString() );
                         }
                         catch ( NullPointerException ex ) {
                             System.out.println( "Error in board " + file + " " + ex.getMessage() );
@@ -136,6 +145,9 @@ public class mvv {
 
                 }
             } );
+
+            System.out.println( "generated master" );
+            masterVersionsTxt.forEach( ( line ) -> { System.out.println( line );});
         }
         catch ( MalformedURLException ex ) {
             System.out.println( ex.getMessage() );
@@ -179,15 +191,15 @@ public class mvv {
             String masterTargetBoardFileName = System.getProperty("user.dir") + System.getProperty("file.separator", "\\") + "bd" + masterBoardName;
             String masterSourceBoardUrl = baseBoardUrl + "/bd" + masterBoardName;
             RepositoryRetriever masterRepositoryRetriever = new RepositoryRetriever( masterSourceBoardUrl, masterTargetBoardFileName );
-            if (  masterRepositoryRetriever.getRepositoryFile() ) {
+            if (  fileExists( masterTargetBoardFileName ) || masterRepositoryRetriever.getRepositoryFile() ) {
             //if (  fileExists( masterTargetBoardFileName ) ) {
                 BoardArchive masterBoardArchive = new BoardArchive(System.getProperty("user.dir"), masterBoardName, legalFiles );
                 if ( comparer.IsUpdatable( masterBoardArchive )) {
                     System.out.println( masterBoardArchive.getName() + ": master vs archive " + comparer.VersionComparison( masterBoardArchive ));
                 }
-                masterBoardArchive.getBadNames().forEach( ( name ) -> {
-                    System.out.println( "  bad name: " + name );
-                });
+//                masterBoardArchive.getBadNames().forEach( ( name ) -> {
+//                    System.out.println( "  bad name: " + name );
+//                });
             }
             else {
                 System.out.println( "Could not retrieve " + masterBoardName );
