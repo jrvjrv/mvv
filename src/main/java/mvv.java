@@ -5,6 +5,8 @@ import com.jrvdev.vasl.board.ExactMatch;
 import com.jrvdev.vasl.board.ExtensionMatch;
 import com.jrvdev.vasl.board.RepositoryRetriever;
 import com.jrvdev.vasl.board.VersionedBoard;
+import com.jrvdev.vasl.board.available_boards.GitFolderRetriever;
+import com.jrvdev.vasl.board.available_boards.GitFolderParser;
 
 import com.jrvdev.vasl.board.IWhiteListMatch;
 import com.jrvdev.vasl.version.IMasterVersion;
@@ -15,9 +17,12 @@ import com.jrvdev.vasl.version.WebMasterVersionRetriever;
 import com.jrvdev.vasl.version.IMasterVersionLoader;
 
 
+import java.lang.NullPointerException;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
+import java.net.URL;
+import java.net.MalformedURLException;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.nio.file.Files;
@@ -62,7 +67,9 @@ public class mvv {
         String sourceBoardUrl = baseBoardUrl + "/bd" + boardName;
         RepositoryRetriever repositoryRetriever = new RepositoryRetriever( sourceBoardUrl, targetBoardFileName );
 
-        repositoryRetriever.getRepositoryFile();
+        if ( ! fileExists( targetBoardFileName ) ) {
+            repositoryRetriever.getRepositoryFile();
+        }
 
         HashSet<IWhiteListMatch> legalFiles = new HashSet<IWhiteListMatch>();
         legalFiles.add( new ExactMatch( "data" ) );
@@ -86,7 +93,83 @@ public class mvv {
 
         //CheckAllBoardsAgainstMaster( masterVersions, comparer, baseBoardUrl, legalFiles );
 
+        CheckMasterForAllBoards( masterVersions );
 
+        GenerateV5boardVersionsTxt( baseBoardUrl, legalFiles );
+
+    }
+
+    private static void GenerateV5boardVersionsTxt( String baseBoardUrl, Set<IWhiteListMatch> legalFiles ) {
+        try {
+            URL target = new URL( "https://api.github.com/repos/vasl-developers/vasl-boards-extensions/contents/");
+            GitFolderRetriever retriever = new GitFolderRetriever(target);
+
+            GitFolderParser parser = new GitFolderParser( retriever );
+
+            String boardsUrlString = parser.getSubfolderUrl( "boards" );
+
+            URL boardsUrl = new URL( boardsUrlString );
+
+            GitFolderRetriever boardsRetriever = new GitFolderRetriever( boardsUrl );
+            GitFolderParser boardsParser = new GitFolderParser( boardsRetriever );
+
+            System.out.println( "generated master" );
+            boardsParser.getFiles().forEach( ( String file ) -> {
+                if( file.startsWith( "bd") ) {
+                    String boardName = file.substring( 2 );
+                    String masterTargetBoardFileName = System.getProperty("user.dir") + System.getProperty("file.separator", "\\") + "bd" + boardName;
+                    String masterSourceBoardUrl = baseBoardUrl + "/bd" + boardName;
+                    RepositoryRetriever masterRepositoryRetriever = new RepositoryRetriever( masterSourceBoardUrl, masterTargetBoardFileName );
+                    if (  fileExists( masterTargetBoardFileName ) || masterRepositoryRetriever.getRepositoryFile() ) {
+                    //if (  fileExists( masterTargetBoardFileName ) ) {
+                        try {
+                            BoardArchive actualBoardArchive = new BoardArchive(System.getProperty("user.dir"), boardName, legalFiles );
+                            System.out.println( boardName + " = " + actualBoardArchive.getVersion().toString() );
+                        }
+                        catch ( NullPointerException ex ) {
+                            System.out.println( "Error in board " + file + " " + ex.getMessage() );
+                        }
+                    }
+                    else {
+                        System.out.println( "Could not retrieve " + boardName );
+                    }
+
+                }
+            } );
+        }
+        catch ( MalformedURLException ex ) {
+            System.out.println( ex.getMessage() );
+        }
+    }
+
+    private static void CheckMasterForAllBoards(IMasterVersion masterVersions) {
+        try {
+            URL target = new URL( "https://api.github.com/repos/vasl-developers/vasl-boards-extensions/contents/");
+            GitFolderRetriever retriever = new GitFolderRetriever(target);
+
+            GitFolderParser parser = new GitFolderParser( retriever );
+
+            String boardsUrlString = parser.getSubfolderUrl( "boards" );
+
+            URL boardsUrl = new URL( boardsUrlString );
+
+            GitFolderRetriever boardsRetriever = new GitFolderRetriever( boardsUrl );
+            GitFolderParser boardsParser = new GitFolderParser( boardsRetriever );
+
+            System.out.println( "boards not found in master" );
+            boardsParser.getFiles().forEach( ( String file ) -> {
+                if( file.startsWith( "bd") ) {
+                    String boardName = file.substring( 2 );
+                    //System.out.println( "Looking at " + boardName );
+                    if ( !masterVersions.keySet().contains( boardName ) ) {
+                        System.out.println( boardName );
+                    }
+                }
+            } );
+        }
+        catch ( MalformedURLException ex ) {
+            System.out.println( ex.getMessage() );
+        }
 
     }
 

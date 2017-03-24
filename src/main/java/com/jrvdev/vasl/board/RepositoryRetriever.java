@@ -8,6 +8,7 @@ import java.io.IOException;
 
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.HttpURLConnection;
 
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
@@ -30,10 +31,10 @@ public class RepositoryRetriever {
 
         FileOutputStream outFile = null;
         InputStream in = null;
+        HttpURLConnection conn = null;
         try {
-
-            URL website = new URL(_url);
-            URLConnection conn = website.openConnection();
+            URL website = new URL(_url.replace(" ", "%20"));
+            conn = (HttpURLConnection) website.openConnection();
             conn.setUseCaches(false);
 
             in = conn.getInputStream();
@@ -45,7 +46,12 @@ public class RepositoryRetriever {
 
         } catch (IOException e) {
             // Fail silently on any error
-            //System.out.println( "retriever: " + e.getMessage() );
+            //try {
+                //System.out.println( "retriever: " + e.getMessage() + " " + conn.getResponseCode() );
+            //}
+            //catch (IOException ex ) {
+                
+            //}
             return false;
         }
         finally {

@@ -12,7 +12,7 @@ import java.nio.channels.Channels;
 
 // TODO: If this fails to retrieve the contents, should signal that fact somehow besides returning
 // an empty JSON String
-class GitFolderRetriever implements IGitFolderRetriever {
+public class GitFolderRetriever implements IGitFolderRetriever {
     private final URL _url;
     private String _contentsJson = "";
     private boolean _contentsLoaded = false;

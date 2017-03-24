@@ -5,7 +5,7 @@ import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.List;
 
-class GitFolderParser implements IGitFolderParser {
+public class GitFolderParser implements IGitFolderParser {
     private IGitFolderRetriever _retriever;
     private boolean _jsonRetrieved = false;
 
