@@ -5,7 +5,8 @@
 
 
 **/*.class
-bd*
+/bd*
+/ovr*
 javac-services.0.log
 javac-services.0.log.lck
 lib/**

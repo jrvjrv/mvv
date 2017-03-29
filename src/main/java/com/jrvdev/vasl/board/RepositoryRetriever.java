@@ -37,6 +37,7 @@ public class RepositoryRetriever {
         InputStream in = null;
         HttpURLConnection conn = null;
         try {
+            //System.out.println( "Retrieving " + _url );
             URL website = new URL( netUtils.encodeUrl( _url ) );
             conn = (HttpURLConnection) website.openConnection();
             conn.setUseCaches(false);

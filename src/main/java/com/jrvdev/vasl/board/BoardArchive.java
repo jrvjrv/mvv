@@ -37,11 +37,11 @@ public class BoardArchive implements IVersionedResource< BoardVersion > {
 
     private Set<IWhiteListMatch> _legalNames;
 
-    // boardName is without "bd" prefix
-    public BoardArchive( String boardArchiveDir, String boardName, Set<IWhiteListMatch> legalNames ) {
+    // boardName is without "bd"/"ovr" prefix
+    public BoardArchive( String boardArchiveDir, String boardName, Set<IWhiteListMatch> legalNames, String prefix ) {
         _boardArchiveDir = boardArchiveDir;
         _boardName = boardName;
-        _boardArchivePath = _boardArchiveDir + System.getProperty("file.separator", "\\") + "bd" + _boardName;
+        _boardArchivePath = _boardArchiveDir + System.getProperty("file.separator", "\\") + prefix + _boardName;
         _legalNames = legalNames;
     }
 
