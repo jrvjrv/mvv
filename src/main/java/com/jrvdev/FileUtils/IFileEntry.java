@@ -1,3 +1,5 @@
+package com.jrvdev.FileUtils;
+
 import java.io.InputStream;
 
 public interface IFileEntry {

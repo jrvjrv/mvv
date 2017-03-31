@@ -1,6 +1,8 @@
 package com.jrvdev.vasl.board;
 
 import com.jrvdev.IOUtils.IOUtilsx;
+import com.jrvdev.FileUtils.IFileCollection;
+import com.jrvdev.FileUtils.IFileEntry;
 import com.jrvdev.vasl.version.IVersionedResource;
 
 import java.io.BufferedReader;
@@ -20,7 +22,7 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 
 // TODO: split this into many classes
-public class BoardArchive implements IVersionedResource< BoardVersion > {
+public class BoardArchive implements IBoardArchive, IFileCollection {
 
     private static final String _boardMetadataFileName = "BoardMetadata.xml"; // name of the board metadata file
     private static final String _boardMetadataElementName = "boardMetadata";
@@ -198,15 +200,15 @@ public class BoardArchive implements IVersionedResource< BoardVersion > {
         return _legacyBoardVersion;
     }
 
-    private void addBadNames( ZipFile archive, Set<String> badNames ) {
-        final Enumeration<? extends ZipEntry> entries = archive.entries();
-        while (entries.hasMoreElements()){
+    private void addBadNames( Set<String> badNames ) {
 
-            final ZipEntry entry = entries.nextElement();
-            if ( isBadName( entry.getName() )) {
-                badNames.add( entry.getName() );
+        this.getEntries().forEach(
+            ( IFileEntry fileEntry ) -> {
+                if ( isBadName( fileEntry.getName() )) {
+                    badNames.add( fileEntry.getName() );
+                }
             }
-        }
+        );
     }
 
     private boolean isBadName( String name ) {
@@ -223,10 +225,34 @@ public class BoardArchive implements IVersionedResource< BoardVersion > {
     public Set<String> getBadNames() {
         HashSet<String> badNames = new HashSet<String>();
 
+        addBadNames( badNames );
+        return badNames;
+    }
+
+    private class FileEntry implements IFileEntry {
+        private final String _fileName;
+        public FileEntry( String fileName ) {
+            _fileName = fileName;
+        }
+        public String getName() {
+            return _fileName;
+        }
+        public InputStream getFileContents() {
+            return null;
+        }
+
+    }
+
+    @Override 
+    public Set<IFileEntry> getEntries() {
+        HashSet<IFileEntry> names = new HashSet<IFileEntry>();
         ZipFile archive = null;
         try {
             archive = new ZipFile( _boardArchivePath );
-            addBadNames( archive, badNames );
+            final Enumeration<? extends ZipEntry> entries = archive.entries();
+            while (entries.hasMoreElements()) {
+                names.add( new FileEntry( entries.nextElement().getName() ) );
+            }
         }
         catch ( IOException ex ) {
             System.out.println( "Error g " + _boardArchivePath + ex.getMessage() );
@@ -235,6 +261,9 @@ public class BoardArchive implements IVersionedResource< BoardVersion > {
         finally {
             IOUtilsx.closeQuietly(archive);
         }
-        return badNames;
+
+        return names;
+        
     }
+
 }
