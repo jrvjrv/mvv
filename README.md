@@ -1,7 +1,7 @@
-#mvv
-##map version verifier
+# mvv
+## map version verifier
 
-###description
+### description
 
 This utility program verifies that vasl maps and overlays available for download match the master file on github. The vasl code checks map file versions used in a new vasl game being set up or a saved vasl game being loaded against a master list on github. If the file version is < the master version, the map is downloaded from github. If the master list falls out of sync with the version of the map in the board/overlay file, vasl attempts to download the map over and over again.
 
@@ -19,8 +19,8 @@ In order to check the actual board archive files, these are downloaded during a 
 
 As part of its run mvv will print contents suitable for v5boardVersions.txt and v5overlayVersions.txt. The output needs to be looked over, as it currently outputs lines for map archives that do not have versions with a blank version. These can be removed.
 
-###running mvv
+### running mvv
 To date mvv has only been run using maven. I use the command "mvn package" to compile and package the program, then "mvn exec:java" to run it. mvv writes all its output to stdout. To capture the output to a file, use standard output redirection, e.g. "mvn exec:java >mvv_run.txt". 
 
-###20170331 status
+### 20170331 status
 At this time mvv works but is not a polished program. There are various hard-coded URLs and names, but I may let these slide as they are not very likely to change. It puts all its output to stdout, and again I may leave that alone. Some parts need to be refactored and need unit tests.
