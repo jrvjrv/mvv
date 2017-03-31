@@ -17,3 +17,4 @@
 # allow specific files at root
 !.gitignore
 !pom.xml
+!README.md
