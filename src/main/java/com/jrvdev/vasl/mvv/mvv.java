@@ -1,5 +1,7 @@
 package com.jrvdev.vasl.mvv;
 
+import com.jrvdev.FileUtils.ZipFileCollection;
+
 import com.jrvdev.vasl.board.BoardArchive;
 import com.jrvdev.vasl.board.BoardVersion;
 import com.jrvdev.vasl.board.BoardVersionComparer;
@@ -21,6 +23,7 @@ import com.jrvdev.vasl.version.IMasterVersionRetriever;
 import com.jrvdev.vasl.version.IMasterVersionLoader;
 
 
+import java.io.IOException;
 import java.lang.NullPointerException;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -47,15 +50,24 @@ public class mvv {
 
         System.out.println("mvv in");
 
-        IMasterVersionLoader mvl = new MasterVersionLoader(
-            new WebMasterVersionRetriever( boardVersionURL ) );
 
-        //String localMasterVersionFilename = System.getProperty("user.dir") + System.getProperty("file.separator", "\\") + "master.txt";
-        //IMasterVersionRetriever localMasterVersionRetriever = new FileMasterVersionRetriever( localMasterVersionFilename );
-        //IMasterVersionLoader localMasterVersionLoader = new MasterVersionLoader( localMasterVersionRetriever );
+        IMasterVersion masterVersions;
+        
+        if ( false ) {
+            // use a file on disk
+            String localMasterVersionFilename = System.getProperty("user.dir") + System.getProperty("file.separator", "\\") + "master.txt";
+            IMasterVersionRetriever localMasterVersionRetriever = new FileMasterVersionRetriever( localMasterVersionFilename );
+            IMasterVersionLoader localMasterVersionLoader = new MasterVersionLoader( localMasterVersionRetriever );
 
-        //IMasterVersion masterVersions = new MasterVersion( localMasterVersionLoader );
-        IMasterVersion masterVersions = new MasterVersion( mvl );
+            masterVersions = new MasterVersion( localMasterVersionLoader );
+        }
+        else 
+        {
+            // retrieve from internet
+            IMasterVersionLoader mvl = new MasterVersionLoader(
+                new WebMasterVersionRetriever( boardVersionURL ) );
+            masterVersions = new MasterVersion( mvl );
+        }
 
         masterVersions.load();
 
@@ -113,8 +125,9 @@ public class mvv {
         legalFiles.add( new ExactMatch( "overlaySSR" ) );
         legalFiles.add( new ExactMatch( "SSRControls" ) );
 
+        ZipFileCollection zipFileCollection = new ZipFileCollection(  buildArchivePath( "bd" + boardName ) );
 
-        BoardArchive boardArchive = new BoardArchive(System.getProperty("user.dir"), boardName, legalFiles, "bd" );
+        BoardArchive boardArchive = new BoardArchive(zipFileCollection, boardName, legalFiles );
 
         System.out.println( "From archive: " + boardArchive.getVersion().toString() );
 
@@ -131,6 +144,10 @@ public class mvv {
         GenerateV5boardVersionsTxt( baseBoardUrl, legalFiles );
         GenerateV5overlaysVersionsTxt( baseOverlayUrl, legalFiles );
 
+    }
+
+    private static String buildArchivePath( String fileName ) {
+        return System.getProperty("user.dir") + System.getProperty("file.separator", "\\") + fileName;
     }
 
     private static void GenerateV5overlaysVersionsTxt( String baseOverlayUrl, Set<IWhiteListMatch> legalFiles ) {
@@ -164,11 +181,17 @@ public class mvv {
                     if (  fileExists( masterTargetOverlayFileName ) || masterRepositoryRetriever.getRepositoryFile() ) {
                     //if (  fileExists( masterTargetBoardFileName ) ) {
                         try {
-                            BoardArchive actualOverlayArchive = new BoardArchive(System.getProperty("user.dir"), overlayName, legalFiles, "ovr" );
+                            ZipFileCollection zipFileCollection = new ZipFileCollection(  buildArchivePath( overlayName ) );
+                            BoardArchive actualOverlayArchive = new BoardArchive(zipFileCollection, overlayName, legalFiles );
                             System.out.println( "Checking for bad names: " + overlayName );
-                            actualOverlayArchive.getBadNames().forEach( ( name ) -> {
-                                System.out.println( "  bad name: " + name );
-                            });
+                            try {
+                                actualOverlayArchive.getBadNames().forEach( ( name ) -> {
+                                    System.out.println( "  bad name: " + name );
+                                });
+                            }
+                            catch ( IOException ex ) {
+                                System.out.println( "Caught IOException " + ex.getMessage() );
+                            }
                             masterVersionsTxt.add( "ovr" + overlayName.replace( " ", "\\u0020") + " = " + actualOverlayArchive.getVersion().toString().replace( " ", "\\u0020" ) );
                         }
                         catch ( NullPointerException ex ) {
@@ -217,11 +240,18 @@ public class mvv {
                     if (  fileExists( masterTargetBoardFileName ) || masterRepositoryRetriever.getRepositoryFile() ) {
                     //if (  fileExists( masterTargetBoardFileName ) ) {
                         try {
-                            BoardArchive actualBoardArchive = new BoardArchive(System.getProperty("user.dir"), boardName, legalFiles, "bd" );
+                            ZipFileCollection zipFileCollection = new ZipFileCollection(  buildArchivePath( "bd" + boardName ) );
+                            BoardArchive actualBoardArchive = new BoardArchive( zipFileCollection, boardName, legalFiles );
                             System.out.println( "Checking for bad names: " + boardName );
-                            actualBoardArchive.getBadNames().forEach( ( name ) -> {
-                                System.out.println( "  bad name: " + name );
-                            });
+                            try {
+                                actualBoardArchive.getBadNames().forEach( ( name ) -> {
+                                    System.out.println( "  bad name: " + name );
+                                });
+                            }
+                            catch ( IOException ex ) {
+                                System.out.println( "Caught IOException " + ex.getMessage() );
+                            }
+                        
                             masterVersionsTxt.add( boardName.replace( " ", "\\u0020") + " = " + actualBoardArchive.getVersion().toString().replace( " ", "\\u0020" ) );
                         }
                         catch ( NullPointerException ex ) {
@@ -323,12 +353,13 @@ public class mvv {
     private static void CheckAllBoardsAgainstMaster( IMasterVersion masterVersions, IVersionComparer<BoardVersion> comparer, String baseBoardUrl, Set<IWhiteListMatch> legalFiles ) {
         masterVersions.forEach( ( String masterBoardName, BoardVersion masterBoardVersion ) -> {
             System.out.println( "loop: " + masterBoardName );
-            String masterTargetBoardFileName = System.getProperty("user.dir") + System.getProperty("file.separator", "\\") + "bd" + masterBoardName;
+            String masterTargetBoardFileName = buildArchivePath( "bd" + masterBoardName );
             String masterSourceBoardUrl = baseBoardUrl + "/bd" + masterBoardName;
             RepositoryRetriever masterRepositoryRetriever = new RepositoryRetriever( masterSourceBoardUrl, masterTargetBoardFileName );
             if (  fileExists( masterTargetBoardFileName ) || masterRepositoryRetriever.getRepositoryFile() ) {
             //if (  fileExists( masterTargetBoardFileName ) ) {
-                BoardArchive masterBoardArchive = new BoardArchive(System.getProperty("user.dir"), masterBoardName, legalFiles, "bd" );
+                ZipFileCollection zipFileCollection = new ZipFileCollection(  masterTargetBoardFileName );
+                BoardArchive masterBoardArchive = new BoardArchive(zipFileCollection, masterBoardName, legalFiles );
                 if ( comparer.IsUpdatable( masterBoardArchive )) {
                     System.out.println( masterBoardArchive.getName() + ": master vs archive " + comparer.VersionComparison( masterBoardArchive ));
                 }
@@ -347,13 +378,14 @@ public class mvv {
             System.out.println( "loop: " + masterOverlayName );
 
             // overlays have "ovr" in the master file; boards do not have "bd". sigh.
-            String masterTargetOverlayFileName = System.getProperty("user.dir") + System.getProperty("file.separator", "\\") + "" + masterOverlayName;
+            String masterTargetOverlayFileName = buildArchivePath( masterOverlayName );
             // overlays have "ovr" in the master file; boards do not have "bd". sigh.
             String masterSourceOverlayUrl = baseOverlayUrl + "/" + masterOverlayName;
             RepositoryRetriever masterRepositoryRetriever = new RepositoryRetriever( masterSourceOverlayUrl, masterTargetOverlayFileName );
             if (  fileExists( masterTargetOverlayFileName ) || masterRepositoryRetriever.getRepositoryFile() ) {
                 //if (  fileExists( masterTargetBoardFileName ) ) {
-                    BoardArchive masterOverlayArchive = new BoardArchive(System.getProperty("user.dir"), masterOverlayName, legalFiles, "" );
+                    ZipFileCollection zipFileCollection = new ZipFileCollection(  masterTargetOverlayFileName );
+                    BoardArchive masterOverlayArchive = new BoardArchive( zipFileCollection, masterOverlayName, legalFiles );
                     try {
                     if ( comparer.IsUpdatable( masterOverlayArchive )) {
                         System.out.println( masterOverlayArchive.getName() + ": master vs archive " + comparer.VersionComparison( masterOverlayArchive ));

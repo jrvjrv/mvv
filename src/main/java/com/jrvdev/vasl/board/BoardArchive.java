@@ -1,20 +1,19 @@
 package com.jrvdev.vasl.board;
 
-import com.jrvdev.IOUtils.IOUtilsx;
 import com.jrvdev.FileUtils.IFileCollection;
 import com.jrvdev.FileUtils.IFileEntry;
 import com.jrvdev.vasl.version.IVersionedResource;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Enumeration;
+import java.io.IOException;
 import java.util.HashSet;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+
+import org.apache.commons.io.IOUtils;
 
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -25,12 +24,14 @@ import org.jdom2.input.SAXBuilder;
 public class BoardArchive implements IBoardArchive, IFileCollection {
 
     private static final String _boardMetadataFileName = "BoardMetadata.xml"; // name of the board metadata file
+    private static final String _legacyMetadataFileName = "data";
     private static final String _boardMetadataElementName = "boardMetadata";
     private static final String _boardMetadataVersionAttrName = "version";
 
-    private String _boardArchiveDir;
+    //private String _boardArchiveDir;
+    private IFileCollection _fileCollection;
     private String _boardName;
-    private String _boardArchivePath;
+    //private String _boardArchivePath;
     private boolean _metadataLoaded;
     private boolean _hasNewVersion;
     private boolean _hasLegacyVersion;
@@ -40,31 +41,14 @@ public class BoardArchive implements IBoardArchive, IFileCollection {
     private Set<IWhiteListMatch> _legalNames;
 
     // boardName is without "bd"/"ovr" prefix
-    public BoardArchive( String boardArchiveDir, String boardName, Set<IWhiteListMatch> legalNames, String prefix ) {
-        _boardArchiveDir = boardArchiveDir;
+    public BoardArchive( IFileCollection fileCollection, String boardName, Set<IWhiteListMatch> legalNames ) { //, String prefix ) {
+        _fileCollection = fileCollection;
+        //_boardArchiveDir = boardArchiveDir;
         _boardName = boardName;
-        _boardArchivePath = _boardArchiveDir + System.getProperty("file.separator", "\\") + prefix + _boardName;
+        //_boardArchivePath = _boardArchiveDir + System.getProperty("file.separator", "\\") + prefix + _boardName;
         _legalNames = legalNames;
     }
 
-    private InputStream getInputStreamForArchiveFile(ZipFile archive, String fileName) throws IOException {
-
-        final Enumeration<? extends ZipEntry> entries = archive.entries();
-        while (entries.hasMoreElements()){
-
-            final ZipEntry entry = entries.nextElement();
-
-            // if found return an InputStream
-            if(entry.getName().equals(fileName)){
-
-                return archive.getInputStream(entry);
-
-            }
-        }
-
-        // file not found
-        throw new IOException("Could not open the file '" + fileName + "' in archive " + _boardArchivePath );
-    }
 
     private void parseBoardMetadataFile(InputStream metadata) {
         try {
@@ -109,51 +93,53 @@ public class BoardArchive implements IBoardArchive, IFileCollection {
         return _boardName;
     }
 
-    //ZipFile archive = new ZipFile(targetBoardFileName);
-    // BoardArchive::ctor( ... )
-    // BoardArchive::getInputStreamForArchiveFile( archive, boardMetadataFleName )
-    // BoardMetadata::parseBoardMetadataFile
     private void loadMetaDataIfNecessary() {
         if ( !_metadataLoaded ) {
-            ZipFile archive = null;
-            try {
-                archive = new ZipFile( _boardArchivePath );
-                getNewVersion(archive);
-                getLegacyVersion(archive);
-            }
-            catch ( IOException ex ) {
-                System.out.println( "Error d " + _boardArchivePath + ex.getMessage() );
-                setNullNewBoardVersion();
-            }
-            finally {
-                IOUtilsx.closeQuietly(archive);
-            }
+            getNewVersion();
+            getLegacyVersion();
             _metadataLoaded = true;
         }
     }
 
-    private void getNewVersion(ZipFile archive ) {
+    private InputStream getStreamByName( String fileName ) throws IOException {
+System.out.println( "looking for " + fileName );
+        return _fileCollection.getEntries().stream().filter( ( entry )-> { return entry.getName().equals( fileName );}).findFirst().get().getFileContents();
+    }
+
+    private void getNewVersion() {
+        InputStream boardMetaDataStream = null;
         try {
-            InputStream boardMetaDataStream = getInputStreamForArchiveFile( archive, _boardMetadataFileName );
+            boardMetaDataStream = getStreamByName( _boardMetadataFileName );
             parseBoardMetadataFile( boardMetaDataStream );
         }
         catch ( IOException ex) {
+            setNullNewBoardVersion();
             //System.out.println( "Error e " + _boardArchivePath + ex.getMessage() );
+        }
+        catch ( NoSuchElementException ex ) {
+            setNullNewBoardVersion();
+            // does not have the 
+        }
+        finally {
+            IOUtils.closeQuietly( boardMetaDataStream );
         }
     }
 
-    private void getLegacyVersion( ZipFile archive ) {
-        final String dataFileName = "data"; // name of the legacy data file
+    private void getLegacyVersion() {
         InputStream dataFileStream = null;
         try { 
-            dataFileStream = getInputStreamForArchiveFile(archive, dataFileName);
+            dataFileStream = getStreamByName( _legacyMetadataFileName );
             parseDataFile( dataFileStream );
         }
         catch ( IOException ex ) {
-            System.out.println( "Error f " + _boardArchivePath + ex.getMessage() );
+            System.out.println( "Error f " +  ex.getMessage() );
+            setNullLegacyBoardVersion();
+        }
+        catch ( NoSuchElementException ex ) {
+            setNullLegacyBoardVersion();
         }
         finally {
-            IOUtilsx.closeQuietly( dataFileStream );
+            IOUtils.closeQuietly( dataFileStream );
         }
     }
 
@@ -192,7 +178,8 @@ public class BoardArchive implements IBoardArchive, IFileCollection {
     }
 
 
-    @Override public BoardVersion getVersion() {
+    @Override 
+    public BoardVersion getVersion() {
         loadMetaDataIfNecessary();
         if ( _hasNewVersion ) {
             return _newBoardVersion;
@@ -200,7 +187,7 @@ public class BoardArchive implements IBoardArchive, IFileCollection {
         return _legacyBoardVersion;
     }
 
-    private void addBadNames( Set<String> badNames ) {
+    private void addBadNames( Set<String> badNames ) throws IOException {
 
         this.getEntries().forEach(
             ( IFileEntry fileEntry ) -> {
@@ -222,47 +209,18 @@ public class BoardArchive implements IBoardArchive, IFileCollection {
 
     }
 
-    public Set<String> getBadNames() {
+    public Set<String> getBadNames() throws IOException {
         HashSet<String> badNames = new HashSet<String>();
 
         addBadNames( badNames );
         return badNames;
     }
 
-    private class FileEntry implements IFileEntry {
-        private final String _fileName;
-        public FileEntry( String fileName ) {
-            _fileName = fileName;
-        }
-        public String getName() {
-            return _fileName;
-        }
-        public InputStream getFileContents() {
-            return null;
-        }
-
-    }
 
     @Override 
-    public Set<IFileEntry> getEntries() {
-        HashSet<IFileEntry> names = new HashSet<IFileEntry>();
-        ZipFile archive = null;
-        try {
-            archive = new ZipFile( _boardArchivePath );
-            final Enumeration<? extends ZipEntry> entries = archive.entries();
-            while (entries.hasMoreElements()) {
-                names.add( new FileEntry( entries.nextElement().getName() ) );
-            }
-        }
-        catch ( IOException ex ) {
-            System.out.println( "Error g " + _boardArchivePath + ex.getMessage() );
-            setNullNewBoardVersion();
-        }
-        finally {
-            IOUtilsx.closeQuietly(archive);
-        }
+    public Set<IFileEntry> getEntries() throws IOException {
 
-        return names;
+        return _fileCollection.getEntries();
         
     }
 
