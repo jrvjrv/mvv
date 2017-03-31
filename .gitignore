@@ -3,13 +3,17 @@
 # to stop tracking a bunch of files
 #   git rm -r --cached *.class
 
+# whitelist .gitignore:
+# Ignore everything, then add specific subtrees/files
+#
+# Ignore everything
+*
+# But descend into directories
+!*/
+# Recursively allow files under subtree
+!/.vscode/**
+!/src/**
 
-**/*.class
-/bd*
-/ovr*
-javac-services.0.log
-javac-services.0.log.lck
-lib/**
-node_modules/**
-target/**
-.classpath
+# allow specific files at root
+!.gitignore
+!pom.xml
