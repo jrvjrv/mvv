@@ -1,3 +1,5 @@
+package com.jrvdev.vasl.mvv;
+
 import com.jrvdev.vasl.board.BoardArchive;
 import com.jrvdev.vasl.board.BoardVersion;
 import com.jrvdev.vasl.board.BoardVersionComparer;
