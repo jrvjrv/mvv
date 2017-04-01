@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -26,13 +27,17 @@ public class ZipFileCollection implements IFileCollection {
         }
     }
 
+    private ZipFile getZipFile() throws IOException {
+        loadZipFileIfNecessary();
+        return _zipFile;
+    }
+
 
     @Override 
     public Set<IFileEntry> getEntries() throws IOException {
         HashSet<IFileEntry> zipEntries = new HashSet<IFileEntry>();
-        loadZipFileIfNecessary();
 
-        final Enumeration<? extends ZipEntry> entries = _zipFile.entries();
+        final Enumeration<? extends ZipEntry> entries = getZipFile().entries();
         while (entries.hasMoreElements()) {
             zipEntries.add( new ZipFileEntry( entries.nextElement().getName(), _zipFile ) );
         }
@@ -40,4 +45,20 @@ public class ZipFileCollection implements IFileCollection {
         return zipEntries;
     }
 
+    @Override
+    public IFileEntry getEntry( String fileName ) throws NoSuchElementException, IOException {
+        final Enumeration<? extends ZipEntry> entries = getZipFile().entries();
+        while (entries.hasMoreElements()){
+
+            final ZipEntry entry = entries.nextElement();
+
+            // if found return an InputStream
+            if(entry.getName().equals(fileName)){
+                return new ZipFileEntry( entry.getName(), getZipFile() );
+            }
+        }
+
+        throw new NoSuchElementException( "Not found " + fileName );
+
+    }
 }

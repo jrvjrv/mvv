@@ -7,6 +7,7 @@ import com.jrvdev.vasl.board.BoardVersion;
 import com.jrvdev.vasl.board.BoardVersionComparer;
 import com.jrvdev.vasl.board.ExactMatch;
 import com.jrvdev.vasl.board.ExtensionMatch;
+import com.jrvdev.vasl.board.LegacyVersionFileParser;
 import com.jrvdev.vasl.board.RepositoryRetriever;
 import com.jrvdev.vasl.board.VersionedBoard;
 import com.jrvdev.vasl.board.available_boards.GitFolderRetriever;
@@ -127,7 +128,7 @@ public class mvv {
 
         ZipFileCollection zipFileCollection = new ZipFileCollection(  buildArchivePath( "bd" + boardName ) );
 
-        BoardArchive boardArchive = new BoardArchive(zipFileCollection, boardName );
+        BoardArchive boardArchive = new BoardArchive(zipFileCollection, boardName, new LegacyVersionFileParser( zipFileCollection ) );
 
         System.out.println( "From archive: " + boardArchive.getVersion().toString() );
 
@@ -182,7 +183,7 @@ public class mvv {
                     //if (  fileExists( masterTargetBoardFileName ) ) {
                         try {
                             ZipFileCollection zipFileCollection = new ZipFileCollection(  buildArchivePath( "ovr" + overlayName ) );
-                            BoardArchive actualOverlayArchive = new BoardArchive(zipFileCollection, overlayName );
+                            BoardArchive actualOverlayArchive = new BoardArchive(zipFileCollection, overlayName, new LegacyVersionFileParser( zipFileCollection ) );
                             System.out.println( "Checking for bad names: " + overlayName );
                             try {
                                 WhiteListCollectionChecker whiteList = new WhiteListCollectionChecker( actualOverlayArchive, legalFiles );
@@ -242,7 +243,7 @@ public class mvv {
                     //if (  fileExists( masterTargetBoardFileName ) ) {
                         try {
                             ZipFileCollection zipFileCollection = new ZipFileCollection(  buildArchivePath( "bd" + boardName ) );
-                            BoardArchive actualBoardArchive = new BoardArchive( zipFileCollection, boardName );
+                            BoardArchive actualBoardArchive = new BoardArchive( zipFileCollection, boardName, new LegacyVersionFileParser( zipFileCollection ) );
                             System.out.println( "Checking for bad names: " + boardName );
                             try {
                                 WhiteListCollectionChecker whiteList = new WhiteListCollectionChecker( actualBoardArchive, legalFiles );
@@ -361,7 +362,7 @@ public class mvv {
             if (  fileExists( masterTargetBoardFileName ) || masterRepositoryRetriever.getRepositoryFile() ) {
             //if (  fileExists( masterTargetBoardFileName ) ) {
                 ZipFileCollection zipFileCollection = new ZipFileCollection(  masterTargetBoardFileName );
-                BoardArchive masterBoardArchive = new BoardArchive(zipFileCollection, masterBoardName );
+                BoardArchive masterBoardArchive = new BoardArchive(zipFileCollection, masterBoardName, new LegacyVersionFileParser( zipFileCollection ) );
                 if ( comparer.IsUpdatable( masterBoardArchive )) {
                     System.out.println( masterBoardArchive.getName() + ": master vs archive " + comparer.VersionComparison( masterBoardArchive ));
                 }
@@ -384,7 +385,7 @@ public class mvv {
             if (  fileExists( masterTargetOverlayFileName ) || masterRepositoryRetriever.getRepositoryFile() ) {
                 //if (  fileExists( masterTargetBoardFileName ) ) {
                     ZipFileCollection zipFileCollection = new ZipFileCollection(  masterTargetOverlayFileName );
-                    BoardArchive masterOverlayArchive = new BoardArchive( zipFileCollection, masterOverlayName );
+                    BoardArchive masterOverlayArchive = new BoardArchive( zipFileCollection, masterOverlayName, new LegacyVersionFileParser( zipFileCollection ) );
                     try {
                     if ( comparer.IsUpdatable( masterOverlayArchive )) {
                         System.out.println( masterOverlayArchive.getName() + ": master vs archive " + comparer.VersionComparison( masterOverlayArchive ));
