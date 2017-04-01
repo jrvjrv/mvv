@@ -18,7 +18,6 @@ public class ZipFileEntry implements IFileEntry {
     }
 
     public String getName() {
-System.out.println( "viewing " + _name );
         return _name;
     }
 
@@ -39,6 +38,4 @@ System.out.println( "viewing " + _name );
         // file not found
         throw new IOException("Could not open the file '" + _name + "' in archive." );
     }
-
-
 }

@@ -127,7 +127,7 @@ public class mvv {
 
         ZipFileCollection zipFileCollection = new ZipFileCollection(  buildArchivePath( "bd" + boardName ) );
 
-        BoardArchive boardArchive = new BoardArchive(zipFileCollection, boardName, legalFiles );
+        BoardArchive boardArchive = new BoardArchive(zipFileCollection, boardName );
 
         System.out.println( "From archive: " + boardArchive.getVersion().toString() );
 
@@ -181,11 +181,12 @@ public class mvv {
                     if (  fileExists( masterTargetOverlayFileName ) || masterRepositoryRetriever.getRepositoryFile() ) {
                     //if (  fileExists( masterTargetBoardFileName ) ) {
                         try {
-                            ZipFileCollection zipFileCollection = new ZipFileCollection(  buildArchivePath( overlayName ) );
-                            BoardArchive actualOverlayArchive = new BoardArchive(zipFileCollection, overlayName, legalFiles );
+                            ZipFileCollection zipFileCollection = new ZipFileCollection(  buildArchivePath( "ovr" + overlayName ) );
+                            BoardArchive actualOverlayArchive = new BoardArchive(zipFileCollection, overlayName );
                             System.out.println( "Checking for bad names: " + overlayName );
                             try {
-                                actualOverlayArchive.getBadNames().forEach( ( name ) -> {
+                                WhiteListCollectionChecker whiteList = new WhiteListCollectionChecker( actualOverlayArchive, legalFiles );
+                                whiteList.getBadNames().forEach( ( name ) -> {
                                     System.out.println( "  bad name: " + name );
                                 });
                             }
@@ -241,10 +242,11 @@ public class mvv {
                     //if (  fileExists( masterTargetBoardFileName ) ) {
                         try {
                             ZipFileCollection zipFileCollection = new ZipFileCollection(  buildArchivePath( "bd" + boardName ) );
-                            BoardArchive actualBoardArchive = new BoardArchive( zipFileCollection, boardName, legalFiles );
+                            BoardArchive actualBoardArchive = new BoardArchive( zipFileCollection, boardName );
                             System.out.println( "Checking for bad names: " + boardName );
                             try {
-                                actualBoardArchive.getBadNames().forEach( ( name ) -> {
+                                WhiteListCollectionChecker whiteList = new WhiteListCollectionChecker( actualBoardArchive, legalFiles );
+                                whiteList.getBadNames().forEach( ( name ) -> {
                                     System.out.println( "  bad name: " + name );
                                 });
                             }
@@ -359,13 +361,10 @@ public class mvv {
             if (  fileExists( masterTargetBoardFileName ) || masterRepositoryRetriever.getRepositoryFile() ) {
             //if (  fileExists( masterTargetBoardFileName ) ) {
                 ZipFileCollection zipFileCollection = new ZipFileCollection(  masterTargetBoardFileName );
-                BoardArchive masterBoardArchive = new BoardArchive(zipFileCollection, masterBoardName, legalFiles );
+                BoardArchive masterBoardArchive = new BoardArchive(zipFileCollection, masterBoardName );
                 if ( comparer.IsUpdatable( masterBoardArchive )) {
                     System.out.println( masterBoardArchive.getName() + ": master vs archive " + comparer.VersionComparison( masterBoardArchive ));
                 }
-//                masterBoardArchive.getBadNames().forEach( ( name ) -> {
-//                    System.out.println( "  bad name: " + name );
-//                });
             }
             else {
                 System.out.println( "Could not retrieve " + masterBoardName );
@@ -385,7 +384,7 @@ public class mvv {
             if (  fileExists( masterTargetOverlayFileName ) || masterRepositoryRetriever.getRepositoryFile() ) {
                 //if (  fileExists( masterTargetBoardFileName ) ) {
                     ZipFileCollection zipFileCollection = new ZipFileCollection(  masterTargetOverlayFileName );
-                    BoardArchive masterOverlayArchive = new BoardArchive( zipFileCollection, masterOverlayName, legalFiles );
+                    BoardArchive masterOverlayArchive = new BoardArchive( zipFileCollection, masterOverlayName );
                     try {
                     if ( comparer.IsUpdatable( masterOverlayArchive )) {
                         System.out.println( masterOverlayArchive.getName() + ": master vs archive " + comparer.VersionComparison( masterOverlayArchive ));
@@ -394,9 +393,6 @@ public class mvv {
                 catch ( java.lang.NullPointerException ex ) {
                     System.out.println( "Error in overlay " + masterOverlayName + " " + ex.getMessage() );
                 }
-//                masterBoardArchive.getBadNames().forEach( ( name ) -> {
-//                    System.out.println( "  bad name: " + name );
-//                });
             }
             else {
                 System.out.println( "Could not retrieve " + masterOverlayName );

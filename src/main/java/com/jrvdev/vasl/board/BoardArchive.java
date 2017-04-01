@@ -28,25 +28,18 @@ public class BoardArchive implements IBoardArchive, IFileCollection {
     private static final String _boardMetadataElementName = "boardMetadata";
     private static final String _boardMetadataVersionAttrName = "version";
 
-    //private String _boardArchiveDir;
     private IFileCollection _fileCollection;
     private String _boardName;
-    //private String _boardArchivePath;
     private boolean _metadataLoaded;
     private boolean _hasNewVersion;
     private boolean _hasLegacyVersion;
     private BoardVersion _newBoardVersion;
     private BoardVersion _legacyBoardVersion;
 
-    private Set<IWhiteListMatch> _legalNames;
-
     // boardName is without "bd"/"ovr" prefix
-    public BoardArchive( IFileCollection fileCollection, String boardName, Set<IWhiteListMatch> legalNames ) { //, String prefix ) {
+    public BoardArchive( IFileCollection fileCollection, String boardName ) {
         _fileCollection = fileCollection;
-        //_boardArchiveDir = boardArchiveDir;
         _boardName = boardName;
-        //_boardArchivePath = _boardArchiveDir + System.getProperty("file.separator", "\\") + prefix + _boardName;
-        _legalNames = legalNames;
     }
 
 
@@ -102,7 +95,6 @@ public class BoardArchive implements IBoardArchive, IFileCollection {
     }
 
     private InputStream getStreamByName( String fileName ) throws IOException {
-System.out.println( "looking for " + fileName );
         return _fileCollection.getEntries().stream().filter( ( entry )-> { return entry.getName().equals( fileName );}).findFirst().get().getFileContents();
     }
 
@@ -185,35 +177,6 @@ System.out.println( "looking for " + fileName );
             return _newBoardVersion;
         }
         return _legacyBoardVersion;
-    }
-
-    private void addBadNames( Set<String> badNames ) throws IOException {
-
-        this.getEntries().forEach(
-            ( IFileEntry fileEntry ) -> {
-                if ( isBadName( fileEntry.getName() )) {
-                    badNames.add( fileEntry.getName() );
-                }
-            }
-        );
-    }
-
-    private boolean isBadName( String name ) {
-        boolean isGood = false;
-
-        for ( IWhiteListMatch matcher: _legalNames ) {
-            isGood = matcher.isMatch( name ) || isGood;
-        }
-
-        return !isGood;
-
-    }
-
-    public Set<String> getBadNames() throws IOException {
-        HashSet<String> badNames = new HashSet<String>();
-
-        addBadNames( badNames );
-        return badNames;
     }
 
 
