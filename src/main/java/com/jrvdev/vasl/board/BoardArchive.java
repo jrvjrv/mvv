@@ -12,17 +12,10 @@ import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.JDOMException;
-import org.jdom2.input.SAXBuilder;
 
 // TODO: split this into many classes
 public class BoardArchive implements IBoardArchive, IFileCollection {
 
-    private static final String _boardMetadataFileName = "BoardMetadata.xml"; // name of the board metadata file
-    private static final String _boardMetadataElementName = "boardMetadata";
-    private static final String _boardMetadataVersionAttrName = "version";
 
     private IFileCollection _fileCollection;
     private String _boardName;
@@ -33,47 +26,16 @@ public class BoardArchive implements IBoardArchive, IFileCollection {
     private boolean _hasLegacyVersion;
     private BoardVersion _legacyBoardVersion;
     private IVersionFileParser _legacyVersionFileParser;
+    private IVersionFileParser _boardMetadataVersionFileParser;
 
     // boardName is without "bd"/"ovr" prefix
-    public BoardArchive( IFileCollection fileCollection, String boardName, IVersionFileParser legacyParser ) {
+    public BoardArchive( IFileCollection fileCollection, String boardName, IVersionFileParser legacyParser, IVersionFileParser boardMetadataVersionFileParser ) {
         _fileCollection = fileCollection;
         _boardName = boardName;
         _legacyVersionFileParser = legacyParser;
+        _boardMetadataVersionFileParser = boardMetadataVersionFileParser;
     }
 
-    private void parseBoardMetadataFile(InputStream metadata) {
-        try {
-            SAXBuilder parser = new SAXBuilder();
-
-            // the root element will be the boardMetadata element
-            Document doc = parser.build(metadata);
-            Element root = doc.getRootElement();
-
-
-            if (root.getName().equals(_boardMetadataElementName)){
-                // read the board-level metadata
-                _newBoardVersion = new BoardVersion( root.getAttributeValue(_boardMetadataVersionAttrName) );
-                _hasNewVersion = true;
-            }
-            else {
-                System.out.println( "Error a" );
-                setNullNewBoardVersion();
-                // do what???
-            }
-        }
-        catch ( IOException ex ) {
-                System.out.println( "Error b" );
-            setNullNewBoardVersion();
-        }
-        catch ( JDOMException ex ) {
-                System.out.println( "Error c" );
-            setNullNewBoardVersion();
-        }
-    }
-
-    private void setNullNewBoardVersion() {
-        _newBoardVersion = new BoardVersion( "" );
-    }
 
     private void getLegacyVersion() {
         String version = _legacyVersionFileParser.getVersion();
@@ -89,11 +51,6 @@ public class BoardArchive implements IBoardArchive, IFileCollection {
         _legacyBoardVersion = new BoardVersion( version );
     }
 
-    private void setNullLegacyBoardVersion() {
-        _hasLegacyVersion = false;
-        _legacyBoardVersion = new BoardVersion( "" );
-    }
-
     @Override public String getName() {
         return _boardName;
     }
@@ -106,27 +63,18 @@ public class BoardArchive implements IBoardArchive, IFileCollection {
         }
     }
 
-    private InputStream getStreamByName( String fileName ) throws IOException {
-        return _fileCollection.getEntries().stream().filter( ( entry )-> { return entry.getName().equals( fileName );}).findFirst().get().getFileContents();
-    }
-
     private void getNewVersion() {
-        InputStream boardMetaDataStream = null;
-        try {
-            boardMetaDataStream = getStreamByName( _boardMetadataFileName );
-            parseBoardMetadataFile( boardMetaDataStream );
+        String version = _boardMetadataVersionFileParser.getVersion();
+        if ( version == null ) version = "";
+        version = version.trim();
+
+        if ( version.length() > 0 ) {
+            _hasNewVersion = true;
         }
-        catch ( IOException ex) {
-            setNullNewBoardVersion();
-            //System.out.println( "Error e " + _boardArchivePath + ex.getMessage() );
+        else {
+            _hasNewVersion = false;
         }
-        catch ( NoSuchElementException ex ) {
-            setNullNewBoardVersion();
-            // does not have the 
-        }
-        finally {
-            IOUtils.closeQuietly( boardMetaDataStream );
-        }
+        _newBoardVersion = new BoardVersion( version );
     }
 
     @Override 
